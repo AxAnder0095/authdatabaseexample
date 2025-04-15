@@ -1,0 +1,109 @@
+const [movieList, setMovieList] = useState([]);
+
+    // New Movie States
+    const [newMovieTitle, setNewMovieTitle] = useState('');
+    const [newReleaseDate, setNewReleaseDate] = useState(0);
+    const [isNewMovieOscar, setIsNewMovieOscar] = useState(false);
+
+    //update title state
+    const [updatedTitle, setUpdateTitle] = useState('');
+
+    // grab movies collection
+    // const moviesCollectionsRef = collection(db, 'movies');
+    const moviesCollectionsRef = collection(db, 'movies');
+
+    const getMovieList = async () => {
+        // READ THE DATA
+        // SET THE MOVIE LIST
+        try {
+            // await docs returned from collection
+            // const data = await getDocs(moviesCollectionsRef);
+            const data = await getDocs(moviesCollectionsRef);
+
+            // get all documents in movies collection
+            const filteredData = data.docs.map((doc) => ({
+                ...doc.data(),
+                id: doc.id,
+            }));
+            setMovieList(filteredData);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    useEffect(() => {
+        getMovieList();
+
+    }, []);
+
+
+    const onsubmitMovie = async () => {
+        try {
+            await addDoc(moviesCollectionsRef, {
+                title: newMovieTitle,
+                releasedate: newReleaseDate,
+                receviedAnOscar: isNewMovieOscar,
+                userID: auth?.currentUser?.uid
+            });
+            getMovieList();
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const deleteMovie = async (id) => {
+        const movieDoc = doc(db, 'movies', id);
+        await deleteDoc(movieDoc);
+    };
+
+    const updateMovieTitle = async (id) => {
+        const movieDoc = doc(db, 'movies', id);
+        await updateDoc(movieDoc, {title: updatedTitle});
+    };
+
+    const logOut = async () => {
+        try {
+            await signOut(auth);
+        }
+        catch (error) {
+            console.log(error);
+        }
+    };
+
+
+// bottom part
+ {user.currentUser.email}
+             <div>
+                 <input
+                     placeholder={'Movie title...'}
+                     onChange={(e) => setNewMovieTitle(e.target.value)}
+                 />
+                 <input
+                     placeholder={'Release date...'}
+                     type={'number'}
+                     onChange={(e) => setNewReleaseDate(Number(e.target.value))}
+                 />
+                 <input
+                     type={'checkbox'}
+                     checked={isNewMovieOscar}
+                     onChange={(e) => setIsNewMovieOscar(e.target.checked)}
+                 />
+                 <label>Received an Oscar</label>
+                 <button onClick={onsubmitMovie}>Submit Movie</button>
+             </div>
+
+             <div className={'display-user-data'}>
+                 {movieList.map((movie) => (
+                     <div>
+                         <h1 style={{color: movie.receviedAnOscar ? 'green' : 'red'}}>Title: {movie.title}</h1>
+                         <p>Date: {movie.releasedate}</p>
+                         <button onClick={() => deleteMovie(movie.id)}>Delete Movie</button>
+
+                         <input
+                             placeholder={'new title...'}
+                             onChange={(e) => setUpdateTitle(e.target.value)}
+                         />
+                         <button onClick={() => updateMovieTitle(movie.id)}>Update Title</button>
+                     </div>
+                 ))}
+             </div>
